@@ -5,7 +5,6 @@ from tqdm import tqdm # プログレスバーを表示
 import time # 計算時間計測プロファイリング用
 
 from IPython.display import clear_output # 途中結果の図示用
-
 # parameters 
 # computational domain
 Lx=0.1e0
@@ -32,7 +31,6 @@ CFLv=0.8
 accel = 1.925e0
 err_tol = 1.e-6
 tiny = 1.e-20
-
 # set grid 
 dx=Lx/np.float64(Nx-1)
 dy=Ly/np.float64(Ny-1)
@@ -56,7 +54,6 @@ for i in range(1,Ny+2):
   yc[i-1]=0.5*(y[i-1]+y[i])/Lx # scaled axis of cell centre
 
 x2d, y2d = np.meshgrid(x,y) # for vector plots
-
 if Uwall != 0.0:
   Uref = Uwall
 else:
@@ -67,7 +64,6 @@ Nt = int(endT*Lx/Uref/dt)
 
 dx2=(dx*dx) 
 dy2=(dy*dy)
-
 # variables 
 u=np.zeros([Ny+1, Nx+2],dtype=np.float64)
 v=np.zeros([Ny+2, Nx+1],dtype=np.float64)
@@ -80,7 +76,6 @@ dive=np.zeros([Ny+1, Nx+1],dtype=np.float64)
 # for plot the velocity on regular grid
 ur=np.array(np.zeros((Ny, Nx+2),dtype=np.float64))
 vr=np.array(np.zeros((Ny+2, Nx),dtype=np.float64))
-
 def calc_aux_u(uaux,u,v):
     for jc in range(1, Ny):
         for i in range(1, Nx+1):
@@ -110,8 +105,7 @@ def set_bc_u(u):
     for i in range(0,Nx+2):
         u[0,i] = -u[1,i]  # bottom wall (uc=0)
         u[Ny,i] = -u[Ny-1,i]+2.e0*Uwall # moving wall (uc=Uwall)
-
-        def calc_aux_v(vaux,u,v):
+def calc_aux_v(vaux,u,v):
     for j in range(1, Ny+1):
         for ic in range(1, Nx):
             # 
@@ -141,15 +135,13 @@ def set_bc_v(v):
         v[Ny,ic] =0.e0
         #v[0,ic]  = -v[2,ic]
         #v[Ny+1,ic] = -v[Ny-1,ic]
-
-      def divergence(div,u,v):
+def divergence(div,u,v):
     for jc in range(1,Ny):
         for ic in range(1,Nx):
             div[jc,ic] = ( (-u[jc,ic] + u[jc, ic+1])/dx \
                        +(-v[jc,ic] + v[jc+1, ic])/dy \
-                      )/dt    
-                      
-                      def calcP(p,div):
+                      )/dt                       
+def calcP(p,div):
     err_n=0.0
     err_d=0.0
     for jc in range(1,Ny):
@@ -174,8 +166,7 @@ def set_bc_pressure(p):
     for jc in range(1,Ny):
         p[jc,0]=p[jc,1]
         p[jc,Nx]=p[jc,Nx-1]
-
-        def correct_u(u, uaux, p):
+      def correct_u(u, uaux, p):
     for jc in range(1, Ny):
         for i in range(1, Nx+1):
             u[jc, i] = uaux[jc, i] - dt*(-p[jc, i-1] + p[jc, i])/dx
@@ -184,8 +175,7 @@ def correct_v(v, vaux, p):
     for j in range(1, Ny+1):
         for ic in range(1, Nx):
             v[j, ic] = vaux[j, ic] - dt*(-p[j-1, ic] + p[j, ic])/dy
-
-            time_ini=time.time()
+          time_ini=time.time()
 ifield=0; 
 for itr in tqdm(range(0,Nt)):
     t0=time.time()
@@ -233,25 +223,4 @@ for itr in tqdm(range(0,Nt)):
         plt.show()
 
 t1=time.time()
-print(' nstep = '+str(itr) + ': time elapsed = '+str(t1-time_ini)+' sec.')    
-
-# interpolate
-uc=0.5*(u[:,:-1]+u[:,1:])/Uref # interpolate at the cell centre with scaling
-vc=0.5*(v[:-1,:]+v[:1,:])/Uref # interpolate at the cell centre with scaling
-
-# plot streamlines and pressure field
-fig, ax = plt.subplots()
-tcf = ax.contourf(xc, yc, p)
-fig.colorbar(tcf)
-
-ax.streamplot(xc,yc,uc,vc,color='w',density=1,integration_direction='backward',arrowstyle="->")
-ax.set_aspect('equal')
-plt.xlim(0, 1); plt.ylim(0, 1)
-ax.set_title("$Re$={0:.2f}".format(Uwall*Ly/nu)+", $t$={0:.3f}".format(itr*dt),fontsize=20)
-ax.set_xlabel('$x^*$',fontsize=24)
-ax.set_ylabel("$y^*$",fontsize=24)
-ax.tick_params(labelsize=20)
-ax.set_aspect('equal')
-plt.tight_layout()
-
-plt.show()
+print(' nstep = '+str(itr) + ': time elapsed = '+str(t1-time_ini)+' sec.')   
