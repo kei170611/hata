@@ -5,6 +5,8 @@ from tqdm import tqdm # プログレスバーを表示
 import time # 計算時間計測プロファイリング用
 
 from IPython.display import clear_output # 途中結果の図示用
+from numba import double
+from numba import jit 
 # parameters 
 # computational domain
 Lx=0.1e0
