@@ -76,6 +76,7 @@ dive=np.zeros([Ny+1, Nx+1],dtype=np.float64)
 # for plot the velocity on regular grid
 ur=np.array(np.zeros((Ny, Nx+2),dtype=np.float64))
 vr=np.array(np.zeros((Ny+2, Nx),dtype=np.float64))
+@jit
 def calc_aux_u(uaux,u,v):
     for jc in range(1, Ny):
         for i in range(1, Nx+1):
@@ -105,6 +106,7 @@ def set_bc_u(u):
     for i in range(0,Nx+2):
         u[0,i] = -u[1,i]  # bottom wall (uc=0)
         u[Ny,i] = -u[Ny-1,i]+2.e0*Uwall # moving wall (uc=Uwall)
+      @jit
 def calc_aux_v(vaux,u,v):
     for j in range(1, Ny+1):
         for ic in range(1, Nx):
@@ -135,12 +137,14 @@ def set_bc_v(v):
         v[Ny,ic] =0.e0
         #v[0,ic]  = -v[2,ic]
         #v[Ny+1,ic] = -v[Ny-1,ic]
+@jit
 def divergence(div,u,v):
     for jc in range(1,Ny):
         for ic in range(1,Nx):
             div[jc,ic] = ( (-u[jc,ic] + u[jc, ic+1])/dx \
                        +(-v[jc,ic] + v[jc+1, ic])/dy \
-                      )/dt                       
+                      )/dt              
+          @jit
 def calcP(p,div):
     err_n=0.0
     err_d=0.0
@@ -158,6 +162,7 @@ def calcP(p,div):
     err_r = np.sqrt(err_n/err_d)
     return err_r
 
+@jit
 def set_bc_pressure(p):
     # p[1,1]=0.e0
     for ic in range(1,Nx):
@@ -166,7 +171,8 @@ def set_bc_pressure(p):
     for jc in range(1,Ny):
         p[jc,0]=p[jc,1]
         p[jc,Nx]=p[jc,Nx-1]
-      def correct_u(u, uaux, p):
+      @jit
+def correct_u(u, uaux, p):
     for jc in range(1, Ny):
         for i in range(1, Nx+1):
             u[jc, i] = uaux[jc, i] - dt*(-p[jc, i-1] + p[jc, i])/dx
@@ -176,7 +182,7 @@ def correct_v(v, vaux, p):
         for ic in range(1, Nx):
             v[j, ic] = vaux[j, ic] - dt*(-p[j-1, ic] + p[j, ic])/dy
           time_ini=time.time()
-ifield=0; 
+ifield=0;
 for itr in tqdm(range(0,Nt)):
     t0=time.time()
     calc_aux_u(uaux, u, v)
@@ -184,24 +190,24 @@ for itr in tqdm(range(0,Nt)):
     calc_aux_v(vaux, u, v)
     set_bc_v(vaux)
     divergence(dive, uaux, vaux)
-    
+
     err_r=1.e0; itr_SOR=0
     while err_r > err_tol:
         itr_SOR += 1
         err_r=calcP(p, dive)
-        if itr < 10: 
-            if itr_SOR >1000: 
+        if itr < 10:
+            if itr_SOR >1000:
                 break
-        elif itr < 20: 
-            if itr_SOR >5000: 
-                break        
-        elif itr < 30: 
-            if itr_SOR >10000: 
+        elif itr < 20:
+            if itr_SOR >5000:
+                break
+        elif itr < 30:
+            if itr_SOR >10000:
                 break
     if np.isnan(err_r)==1:
         print('NaN: at itr='+str(itr)+', itr(SOR)='+str(itr_SOR))
         break
-        
+
     correct_u(u, uaux, p)
     set_bc_u(u)
     correct_v(v, vaux, p)
@@ -223,4 +229,4 @@ for itr in tqdm(range(0,Nt)):
         plt.show()
 
 t1=time.time()
-print(' nstep = '+str(itr) + ': time elapsed = '+str(t1-time_ini)+' sec.')   
+print(' nstep = '+str(itr) + ': time elapsed = '+str(t1-time_ini)+' sec.')
