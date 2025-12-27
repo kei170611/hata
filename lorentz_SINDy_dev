@@ -6,7 +6,7 @@ from sklearn.impute import KNNImputer
 from scipy.ndimage import gaussian_filter1d
 
 # =========================
-# 1. Lorenz System Definition
+# 1. Lorenz System Definition ローレンツ系の定義
 # =========================
 sigma = 10.0
 rho   = 28.0
@@ -20,7 +20,7 @@ def lorenz(t, xyz):
     return [dx, dy, dz]
 
 # =========================
-# 2. Time and Initial Conditions
+# 2. Time and Initial Conditions 時間設定および初期条件
 # =========================
 t0, t1 = 0.0, 20.0
 dt = 0.01
@@ -28,14 +28,14 @@ t_eval = np.arange(t0, t1, dt)
 x0 = [1.0, 1.0, 1.0]
 
 # =========================
-# 3. True Trajectory
+# 3. True Trajectory 真の軌道
 # =========================
 sol = solve_ivp(lorenz, (t0, t1), x0, t_eval=t_eval)
 t = sol.t
 X_true = sol.y.T
 
 # =========================
-# 4. Noisy + Missing Data Generation
+# 4. Noisy + Missing Data Generation ノイズ付加および欠損データの生成
 # =========================
 rng = np.random.default_rng(42)
 noise_level = 0.02
@@ -55,7 +55,7 @@ print(f"Noise level: {noise_level}, Missing ratio: {missing_ratio}")
 print(f"Missing points: {np.sum(missing_mask)} / {X_noisy_masked.size}")
 
 # =========================
-# 5. Robust Numerical Differentiation
+# 5. Robust Numerical Differentiation ロバストな数値微分
 # =========================
 def smooth_derivative(X, dt, sigma_smooth=3):
     """Gaussian smoothing + 2nd order finite difference"""
@@ -72,7 +72,7 @@ def smooth_derivative(X, dt, sigma_smooth=3):
 dXdt = smooth_derivative(X_imputed, dt)
 
 # =========================
-# 6. Extended Library Θ(X)
+# 6. Extended Library Θ(X) 拡張ライブラリ Θ(X)
 # =========================
 def build_library_extended(X):
     x, y, z = X[:, 0], X[:, 1], X[:, 2]
@@ -92,7 +92,7 @@ def build_library_extended(X):
 Theta = build_library_extended(X_imputed)
 
 # =========================
-# 7. Robust SINDy (Ridge + ISTA)
+# 7. Robust SINDy (Ridge + ISTA) ロバスト SINDy（Ridge 初期化＋ISTA）
 # =========================
 def robust_sindy(Theta, dXdt_col, lam=0.1, max_iter=5000):
     """Noise-robust sparse regression"""
@@ -115,7 +115,7 @@ for i in range(3):
     Xi_robust[:, i] = robust_sindy(Theta, dXdt[:, i], lam=0.1)
 
 # =========================
-# 8. True vs Estimated Coefficients
+# 8. True vs Estimated Coefficients 真の係数と推定係数の比較
 # =========================
 terms = ["1", "x", "y", "z", "xy", "xz", "yz"]
 
@@ -141,7 +141,7 @@ print(df_est_display.round(2))
 print(f"\nMSE Error: {np.mean((Xi_robust - true_Xi)**2):.4f}")
 
 # =========================
-# 9. Model Reconstruction & Validation
+# 9. Model Reconstruction & Validation モデル再構成および検証
 # =========================
 std_x, std_y, std_z = np.std(X_imputed[:,0]), np.std(X_imputed[:,1]), np.std(X_imputed[:,2])
 
@@ -163,7 +163,7 @@ mse_reconstruction = np.mean((X_sindy - X_true)**2, axis=0)
 print(f"\nReconstruction MSE: x={mse_reconstruction[0]:.4f}, y={mse_reconstruction[1]:.4f}, z={mse_reconstruction[2]:.4f}")
 
 # =========================
-# 10. Visualization (English labels)
+# 10. Visualization (English labels) 可視化（英語ラベル）
 # =========================
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
@@ -201,9 +201,9 @@ axes[1,1].set_ylabel('Variables (x,y,z)')
 plt.tight_layout()
 plt.show()
 
-print("\n=== Key Improvements Summary ===")
-print("1. White noise (2%): Gaussian smoothing for derivative noise reduction")
-print("2. Missing data (20%): KNN imputation with temporal correlation")
-print("3. Numerical diff: 2nd-order finite difference with smoothing")
-print("4. Library: Reduced polynomials + normalization for stability")
-print("5. SINDy: Ridge init + adaptive ISTA for robust sparsity")
+print("\n===主な改良点のまとめ===")
+print("1. ホワイトノイズ（2%）：微分時のノイズ低減のためにガウス平滑化を適用")
+print("2. 欠損データ（20%）：時間的相関を考慮した KNN 補完を使用")
+print("3. 数値微分：平滑化を併用した 2 次精度の有限差分法")
+print("4. ライブラリ：安定性向上のため，多項式次数を削減し正規化を実施")
+print("5. SINDy：ロバストなスパース性を得るため，Ridge 初期化＋適応的 ISTA を採用")
